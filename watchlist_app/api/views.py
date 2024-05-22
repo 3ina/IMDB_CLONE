@@ -19,3 +19,5 @@ class MovieList(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
