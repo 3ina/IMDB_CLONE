@@ -1,5 +1,5 @@
 """
-ASGI config for IMBD_CLONE project.
+ASGI config for IMDB_CLONE project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'IMBD_CLONE.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'IMDB_CLONE.settings')
 
 application = get_asgi_application()

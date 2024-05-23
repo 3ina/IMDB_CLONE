@@ -1,5 +1,5 @@
 """
-WSGI config for IMBD_CLONE project.
+WSGI config for IMDB_CLONE project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'IMBD_CLONE.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'IMDB_CLONE.settings')
 
 application = get_wsgi_application()
