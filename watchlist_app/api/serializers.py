@@ -3,11 +3,9 @@ from rest_framework import serializers
 
 
 class StreamPlatformSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.StreamPlatform
         fields = "__all__"
-
 
 
 class WatchListSerializer(serializers.ModelSerializer):
@@ -18,9 +16,8 @@ class WatchListSerializer(serializers.ModelSerializer):
         model = models.WatchList
         fields = ['__all__']
 
-    def get_len_name(self,obj):
+    def get_len_name(self, obj):
         return len(obj.name)
-
 
     def validate(self, data):
         if data['title'] == data['description']:
