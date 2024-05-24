@@ -14,12 +14,44 @@ class StreamPlatformList(APIView):
         return Response(serializer.data)
 
     def post(self,request : HttpRequest):
-        serializer = StreamPlatformSerializer(request.POST)
+        serializer = StreamPlatformSerializer(request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+class StreamPlatformDetail(APIView):
+    def get(self,request,pk):
+        try:
+            stream = StreamPlatform.objects.get(pk=pk)
+        except StreamPlatform.DoesNotExist:
+            return Response({"error" : "stream platform does not exists"})
+
+        serializer = StreamPlatformSerializer(stream)
+        return Response(serializer.data)
+
+    def put(self,request,pk):
+        try:
+            stream = StreamPlatform.objects.get(pk=pk)
+        except StreamPlatform.DoesNotExist:
+            return Response({"error": "stream platform does not exists"})
+
+        serializer = StreamPlatformSerializer(stream,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self,request,pk):
+        try:
+            stream = StreamPlatform.objects.get(pk=pk)
+        except StreamPlatform.DoesNotExist:
+            return Response({"error": "stream platform does not exists"})
+
+        stream.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -32,7 +64,7 @@ class WatchList(APIView):
         return Response(serializer.data)
 
     def post(self, request: HttpRequest):
-        serializer = WatchListSerializer(data=request.POST)
+        serializer = WatchListSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -56,7 +88,7 @@ class WatchDetail(APIView):
             movie = WatchList.objects.get(pk=pk)
         except WatchList.DoesNotExist:
             return Response({'error': 'movie not found'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = WatchListSerializer(movie, request.POST)
+        serializer = WatchListSerializer(movie, request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
