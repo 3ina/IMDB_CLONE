@@ -2,10 +2,7 @@ from watchlist_app import models
 from rest_framework import serializers
 
 
-class StreamPlatformSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.StreamPlatform
-        fields = "__all__"
+
 
 
 class WatchListSerializer(serializers.ModelSerializer):
@@ -30,3 +27,11 @@ class WatchListSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Name is to short!")
         else:
             return value
+
+
+
+class StreamPlatformSerializer(serializers.ModelSerializer):
+    watchlist = serializers.HyperlinkedRelatedField(many=True,read_only=True,view_name='movie-detail')
+    class Meta:
+        model = models.StreamPlatform
+        fields = "__all__"
