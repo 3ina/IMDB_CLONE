@@ -1,19 +1,29 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from watchlist_app.models import WatchList ,StreamPlatform
-from watchlist_app.api.serializers import WatchListSerializer , StreamPlatformSerializer
+from watchlist_app.models import WatchList, StreamPlatform, Review
+from watchlist_app.api.serializers import (
+    WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
+)
 from django.http.request import HttpRequest
+from rest_framework import mixins, generics
+
+
+class ReviewList(mixins.ListModelMixin,
+                 mixins.CreateModelMixin,
+                 generics.GenericAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer()
 
 
 class StreamPlatformList(APIView):
 
-    def get(self,request : HttpRequest):
+    def get(self, request: HttpRequest):
         platform = StreamPlatform.objects.all()
-        serializer = StreamPlatformSerializer(platform,many=True,context={'request',request})
+        serializer = StreamPlatformSerializer(platform, many=True, context={'request', request})
         return Response(serializer.data)
 
-    def post(self,request : HttpRequest):
+    def post(self, request: HttpRequest):
         serializer = StreamPlatformSerializer(request.data)
         if serializer.is_valid():
             serializer.save()
@@ -21,30 +31,31 @@ class StreamPlatformList(APIView):
         else:
             return Response(serializer.errors)
 
+
 class StreamPlatformDetail(APIView):
-    def get(self,request,pk):
-        try:
-            stream = StreamPlatform.objects.get(pk=pk)
-        except StreamPlatform.DoesNotExist:
-            return Response({"error" : "stream platform does not exists"})
-
-        serializer = StreamPlatformSerializer(stream)
-        return Response(serializer.data)
-
-    def put(self,request,pk):
+    def get(self, request, pk):
         try:
             stream = StreamPlatform.objects.get(pk=pk)
         except StreamPlatform.DoesNotExist:
             return Response({"error": "stream platform does not exists"})
 
-        serializer = StreamPlatformSerializer(stream,data=request.data)
+        serializer = StreamPlatformSerializer(stream)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        try:
+            stream = StreamPlatform.objects.get(pk=pk)
+        except StreamPlatform.DoesNotExist:
+            return Response({"error": "stream platform does not exists"})
+
+        serializer = StreamPlatformSerializer(stream, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
 
-    def delete(self,request,pk):
+    def delete(self, request, pk):
         try:
             stream = StreamPlatform.objects.get(pk=pk)
         except StreamPlatform.DoesNotExist:
@@ -52,8 +63,6 @@ class StreamPlatformDetail(APIView):
 
         stream.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 
 class WatchList(APIView):
