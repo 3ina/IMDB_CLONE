@@ -9,6 +9,16 @@ from django.http.request import HttpRequest
 from rest_framework import mixins, generics
 
 
+
+class ReviewCreate(generics.CreateAPIView):
+    serializer_class = ReviewSerializer
+
+    def perform_create(self, serializer):
+        pk = self.kwargs.get('pk')
+        watchList = WatchList.objects.get(pk=pk)
+        serializer.save(watchList=watchList)
+
+
 class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -17,18 +27,13 @@ class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
         return self.retrieve(request, *args, **kwargs)
 
 
-class ReviewList(mixins.ListModelMixin,
-                 mixins.CreateModelMixin,
-                 generics.GenericAPIView):
+class ReviewList(generics.ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        Review.objects.filter(watchlist_id=pk)
 
 class StreamPlatformList(APIView):
 
