@@ -15,10 +15,11 @@ class WatchListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.WatchList
-        fields = ['__all__']
+        fields = '__all__'
+
 
     def get_len_name(self, obj):
-        return len(obj.name)
+        return len(obj.title)
 
     def validate(self, data):
         if data['title'] == data['description']:
