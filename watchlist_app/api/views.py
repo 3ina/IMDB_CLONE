@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from watchlist_app.models import WatchList, StreamPlatform, Review
 from watchlist_app.api.serializers import (
@@ -8,21 +9,27 @@ from watchlist_app.api.serializers import (
 )
 from django.http.request import HttpRequest
 from rest_framework import mixins, generics ,viewsets
-
+from permissions import AdminOrReadOnly
 
 
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
+
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
         watchList = WatchList.objects.get(pk=pk)
-        serializer.save(watchList=watchList)
+        review_user = self.request.user
+        review_queryset = Review.objects.filter(watchlist=watchList,review_user=review_user)
+        if review_queryset.exists():
+            raise ValidationError("You have already reviewed this movie")
+        serializer.save(watchList=watchList,review_user=review_user)
 
 
 class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [AdminOrReadOnly]
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
