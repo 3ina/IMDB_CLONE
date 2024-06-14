@@ -1,5 +1,7 @@
 import rest_framework.serializers
 from django.shortcuts import get_object_or_404
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -10,13 +12,19 @@ from watchlist_app.api.serializers import (
 )
 from django.http.request import HttpRequest
 from rest_framework import mixins, generics ,viewsets
-from permissions import AdminOrReadOnly
+from .permissions import AdminOrReadOnly
 
 
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
+
+
     def perform_create(self, serializer :rest_framework.serializers.Serializer):
+
+        if getattr(self, 'swagger_fake_view', False):
+            return
+
         pk = self.kwargs.get('pk')
         watchList = WatchList.objects.get(pk=pk)
         review_user = self.request.user
@@ -33,6 +41,9 @@ class ReviewCreate(generics.CreateAPIView):
         watchList.save()
         serializer.save(watchList=watchList,review_user=review_user)
 
+    def get_queryset(self):
+        return Review.objects.all()
+
 
 class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
     queryset = Review.objects.all()
@@ -48,8 +59,10 @@ class ReviewList(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return
         pk = self.kwargs['pk']
-        Review.objects.filter(watchlist_id=pk)
+        return Review.objects.filter(watchlist_id=pk)
 
 
 class StreamPlatformVS(viewsets.ViewSet):
