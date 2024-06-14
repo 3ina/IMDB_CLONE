@@ -1,3 +1,4 @@
+import rest_framework.serializers
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
@@ -15,14 +16,21 @@ from permissions import AdminOrReadOnly
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
-
-    def perform_create(self, serializer):
+    def perform_create(self, serializer :rest_framework.serializers.Serializer):
         pk = self.kwargs.get('pk')
         watchList = WatchList.objects.get(pk=pk)
         review_user = self.request.user
         review_queryset = Review.objects.filter(watchlist=watchList,review_user=review_user)
         if review_queryset.exists():
             raise ValidationError("You have already reviewed this movie")
+
+        if watchList.number_rating == 0:
+            watchList.avg_rating = serializer.validated_data['rating']
+        else:
+            watchList.avg_rating = (watchList.avg_rating + serializer.validated_data['rating'])/2
+
+        watchList.number_rating = watchList.number_rating + 1
+        watchList.save()
         serializer.save(watchList=watchList,review_user=review_user)
 
 
