@@ -1,5 +1,6 @@
 import rest_framework.serializers
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -12,7 +13,10 @@ from watchlist_app.api.serializers import (
 )
 from django.http.request import HttpRequest
 from rest_framework import mixins, generics ,viewsets
-from .permissions import AdminOrReadOnly
+from .permissions import AdminOrReadOnly , ReviewUserOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+
+from .pagination import WatchListPagination
 
 
 class UserReview(generics.ListAPIView):
@@ -26,8 +30,7 @@ class UserReview(generics.ListAPIView):
 
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
-
-
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer :rest_framework.serializers.Serializer):
 
@@ -54,18 +57,19 @@ class ReviewCreate(generics.CreateAPIView):
         return Review.objects.all()
 
 
-class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
+class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [AdminOrReadOnly]
+    permission_classes = [ReviewUserOrReadOnly]
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+
 
 
 class ReviewList(generics.ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['user__username','active']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -74,18 +78,17 @@ class ReviewList(generics.ListCreateAPIView):
         return Review.objects.filter(watchlist_id=pk)
 
 
-class StreamPlatformVS(viewsets.ViewSet):
+class StreamPlatformVS(viewsets.ModelViewSet):
+    queryset = StreamPlatform.objects.all()
+    serializer_class = StreamPlatformSerializer
+    permission_classes = [AdminOrReadOnly]
 
-    def list(self, request):
-        queryset = StreamPlatform.objects.all()
-        serializer = StreamPlatformSerializer(queryset, many=True,context={'request': request})
-        return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
-        queryset = StreamPlatform.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
-        serializer = StreamPlatformSerializer(user,context={'request': request})
-        return Response(serializer.data)
+class WatchListGV(generics.ListAPIView):
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
+    pagination_class = WatchListPagination
+
 
 
 class StreamPlatformList(APIView):
