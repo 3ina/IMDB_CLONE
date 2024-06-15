@@ -15,6 +15,15 @@ from rest_framework import mixins, generics ,viewsets
 from .permissions import AdminOrReadOnly
 
 
+class UserReview(generics.ListAPIView):
+
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        username = self.request.query_params.get('username',None)
+        return Review.objects.filter(user__username=username)
+
+
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
