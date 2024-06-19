@@ -23,7 +23,7 @@ class WatchListSerializer(serializers.ModelSerializer):
         return len(obj.title)
 
     def validate(self, data):
-        if data['title'] == data['description']:
+        if data['title'] == data['storyline']:
             raise serializers.ValidationError("Title and Description should be different")
         else:
             return data

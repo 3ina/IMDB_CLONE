@@ -16,6 +16,7 @@ from rest_framework import mixins, generics ,viewsets
 from .permissions import AdminOrReadOnly , ReviewUserOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 
+
 from .pagination import WatchListPagination
 
 
@@ -142,16 +143,20 @@ class StreamPlatformDetail(APIView):
 
 class WatchListV(APIView):
 
+
     def get(self, request):
         movies = WatchList.objects.all()
         serializer = WatchListSerializer(movies, many=True)
         return Response(serializer.data)
 
+
     def post(self, request: HttpRequest):
+        self.permission_classes = [AdminOrReadOnly]
+        self.check_permissions(request)
         serializer = WatchListSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data,status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors)
 
@@ -187,3 +192,6 @@ class WatchDetail(APIView):
 
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+

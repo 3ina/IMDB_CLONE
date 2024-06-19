@@ -1,3 +1,5 @@
+import json
+
 from rest_framework.test import APITestCase , APIClient
 from django.urls import reverse
 from rest_framework import status
@@ -99,3 +101,59 @@ class StreamPlatformTestCase(APITestCase):
 
 
 
+class WatchListViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.admin_user = User.objects.create_user(
+            username='admin',
+            password='adminpassword',
+            is_staff=True,
+            email="admin@gmail.com",
+        )
+
+        self.admin_token = self.get_token_for_user(self.admin_user)
+
+        self.user = User.objects.create_user(
+            username='user',
+            password='userpassword',
+            email="user@gmail.com",
+
+        )
+
+        self.user_token = self.get_token_for_user(self.user)
+        self.stream = models.StreamPlatform.objects.create(name="HBO",
+                                                           about="#2 platform",
+                                                           website="https://hbo.com")
+
+        self.watchlist_data = {'title': 'Inception', 'storyline': 'A mind-bending thriller', 'platform':self.stream.id}
+        self.watchlist = models.WatchList.objects.create(title='Inception',storyline='A mind-bending thriller',platform=self.stream)
+        self.url = reverse('movie-list')
+
+    def get_token_for_user(self, user):
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+    def test_get_watchlist(self):
+        response = self.client.get(self.url, format='json')
+        watchlists = models.WatchList.objects.all()
+        serializer = serializers.WatchListSerializer(watchlists, many=True)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, serializer.data)
+
+    def test_create_watchlist_as_admin(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.admin_token['access'])
+        response = self.client.post(self.url, self.watchlist_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_watchlist_as_non_admin(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.user_token['access'])
+        response = self.client.post(self.url, self.watchlist_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_watchlist_without_auth(self):
+        response = self.client.post(self.url, self.watchlist_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
