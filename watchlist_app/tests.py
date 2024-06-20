@@ -157,3 +157,39 @@ class WatchListViewTestCase(APITestCase):
     def test_create_watchlist_without_auth(self):
         response = self.client.post(self.url, self.watchlist_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+
+class ReviewCreateTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='testuser', password='testpass',email="test@gmail.com")
+        self.client = APIClient()
+        self.platform = models.StreamPlatform.objects.create(name="Netflix", about="Stream movies",
+                                                      website="https://netflix.com")
+        self.watchlist = models.WatchList.objects.create(title="Example Movie", storyline="An example storyline",
+                                                  platform=self.platform)
+
+    def authenticate(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+
+    def test_create_review(self):
+        self.authenticate()
+        data = {
+            "rating": 5,
+            "description": "Great movie!",
+            "watchlist": self.watchlist.id
+        }
+        response = self.client.post(reverse('review-create', kwargs={'pk': self.watchlist.id}), data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_duplicate_review(self):
+        self.authenticate()
+        data = {
+            "rating": 5,
+            "description": "Great movie!",
+            "watchlist": self.watchlist.id
+        }
+        self.client.post(reverse('review-create', kwargs={'pk': self.watchlist.id}), data)
+        response = self.client.post(reverse('review-create', kwargs={'pk': self.watchlist.id}), data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
