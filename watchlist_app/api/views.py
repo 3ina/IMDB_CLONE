@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from watchlist_app.models import WatchList, StreamPlatform, Review
 from watchlist_app.api.serializers import (
-    WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
+    WatchListSerializer, StreamPlatformSerializer, ReviewSerializer , ReviewCreateSerializer
 )
 from django.http.request import HttpRequest
 from rest_framework import mixins, generics ,viewsets
@@ -30,7 +30,7 @@ class UserReview(generics.ListAPIView):
 
 
 class ReviewCreate(generics.CreateAPIView):
-    serializer_class = ReviewSerializer
+    serializer_class = ReviewCreateSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer :rest_framework.serializers.Serializer):
@@ -41,7 +41,7 @@ class ReviewCreate(generics.CreateAPIView):
         pk = self.kwargs.get('pk')
         watchList = WatchList.objects.get(pk=pk)
         review_user = self.request.user
-        review_queryset = Review.objects.filter(watchlist=watchList,review_user=review_user)
+        review_queryset = Review.objects.filter(watchlist=watchList,user=review_user)
         if review_queryset.exists():
             raise ValidationError("You have already reviewed this movie")
 
@@ -52,7 +52,12 @@ class ReviewCreate(generics.CreateAPIView):
 
         watchList.number_rating = watchList.number_rating + 1
         watchList.save()
-        serializer.save(watchList=watchList,review_user=review_user)
+        Review.objects.create(
+            user=review_user,
+            rating=serializer.validated_data['rating'],
+            description=serializer.validated_data['description'],
+            watchlist=watchList,
+        )
 
     def get_queryset(self):
         return Review.objects.all()

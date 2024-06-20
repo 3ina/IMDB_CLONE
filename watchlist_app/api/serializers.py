@@ -2,6 +2,11 @@ from watchlist_app import models
 from rest_framework import serializers
 
 
+class ReviewCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Review
+        exclude = ("watchlist","user","active")
+
 class ReviewSerializer(serializers.ModelSerializer):
     review_user = serializers.StringRelatedField(read_only=True)
     class Meta:
