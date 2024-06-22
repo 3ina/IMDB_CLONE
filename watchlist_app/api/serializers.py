@@ -8,7 +8,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
         exclude = ("watchlist","user","active")
 
 class ReviewSerializer(serializers.ModelSerializer):
-    review_user = serializers.StringRelatedField(read_only=True)
+    user = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = models.Review
         exclude = ("watchlist",)

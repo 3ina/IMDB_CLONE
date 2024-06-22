@@ -193,3 +193,56 @@ class ReviewCreateTestCase(APITestCase):
         self.client.post(reverse('review-create', kwargs={'pk': self.watchlist.id}), data)
         response = self.client.post(reverse('review-create', kwargs={'pk': self.watchlist.id}), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewDetailTestCase(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user2 = User.objects.create_user(username='testuser2', password='testpass2')
+        self.client = APIClient()
+        self.platform = models.StreamPlatform.objects.create(name="Netflix", about="Stream movies",
+                                                      website="https://netflix.com")
+        self.watchlist = models.WatchList.objects.create(title="Example Movie", storyline="An example storyline",
+                                                  platform=self.platform)
+        self.review = models.Review.objects.create(user=self.user, rating=5, description="Great movie!",
+                                            watchlist=self.watchlist)
+
+    def authenticate(self, user):
+        refresh = RefreshToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+
+    def test_get_review(self):
+        response = self.client.get(reverse('review-detail', kwargs={'pk': self.review.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_review(self):
+        self.authenticate(self.user)
+        data = {
+            "rating": 4,
+            "description": "Updated review",
+        }
+        response = self.client.put(reverse('review-detail', kwargs={'pk': self.review.id}), data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.rating, 4)
+        self.assertEqual(self.review.description, "Updated review")
+
+    def test_update_review_by_other_user(self):
+        self.authenticate(self.user2)
+        data = {
+            "rating": 4,
+            "description": "Updated review",
+        }
+        response = self.client.put(reverse('review-detail', kwargs={'pk': self.review.id}), data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_review(self):
+        self.authenticate(self.user)
+        response = self.client.delete(reverse('review-detail', kwargs={'pk': self.review.id}))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_review_by_other_user(self):
+        self.authenticate(self.user2)
+        response = self.client.delete(reverse('review-detail', kwargs={'pk': self.review.id}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
